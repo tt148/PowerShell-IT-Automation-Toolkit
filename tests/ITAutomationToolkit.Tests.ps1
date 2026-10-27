@@ -50,6 +50,7 @@ Describe 'Invoke-EmployeeOffboarding' {
         $device = Import-Csv (Join-Path $script:TestData 'devices.csv') | Where-Object DeviceId -eq DEV-202
         $device.ReturnRequired | Should -Be 'true'
         $result.AccountDisabled | Should -BeTrue
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'employee-offboarding'
     }
     It 'rejects an unknown employee' { { Invoke-EmployeeOffboarding -EmployeeId EMP-999 -Confirm:$false } | Should -Throw '*not found*' }
     It 'does not change CSV data with WhatIf and logs dry run' {
@@ -95,7 +96,7 @@ Describe 'Test-PasswordPolicyCompliance' {
 }
 
 Describe 'Export-ToolkitReport' {
-    It 'exports both CSV and JSON' { $result = @([pscustomobject]@{Name='sample';Count=2}) | Export-ToolkitReport -Name sample-report -Format Both; $result.Files.Count | Should -Be 2; $result.Files | ForEach-Object { Test-Path $_ | Should -BeTrue } }
+    It 'exports both CSV and JSON' { $result = @([pscustomobject]@{Name='sample';Count=2}) | Export-ToolkitReport -Name sample-report -Format Both; $result.Files.Count | Should -Be 2; $result.Files | ForEach-Object { Test-Path $_ | Should -BeTrue }; (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'report-export' }
     It 'rejects unsafe report names' { { @([pscustomobject]@{A=1}) | Export-ToolkitReport -Name '../unsafe' } | Should -Throw }
     It 'does not create report files with WhatIf and logs dry run' { $result = @([pscustomobject]@{A=1}) | Export-ToolkitReport -Name dry-run -WhatIf; $result.DryRun | Should -BeTrue; (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"dryRun":true' }
 }
