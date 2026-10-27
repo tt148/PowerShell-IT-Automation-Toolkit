@@ -50,8 +50,8 @@ function Get-ToolkitActor {
 function Get-ToolkitGroupNames {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Department, [Parameter(Mandatory)][object[]]$Groups)
-    $matches = @($Groups | Where-Object { $_.Department -eq $Department })
-    return @($matches | ForEach-Object { $_.GroupName } | Where-Object { $_ })
+    $matchingGroups = @($Groups | Where-Object { $_.Department -eq $Department })
+    return @($matchingGroups | ForEach-Object { $_.GroupName } | Where-Object { $_ })
 }
 
 function Test-ToolkitStaleDate {
