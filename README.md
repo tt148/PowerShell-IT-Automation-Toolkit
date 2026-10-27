@@ -12,7 +12,7 @@ IT support teams repeat the same account, access and device tasks every day. Man
 
 - **Onboarding:** create a fictional employee record, assign department groups and return a checklist.
 - **Offboarding:** disable a simulated account, remove group membership and flag devices for return.
-- **Access reviews:** identify stale accounts, privileged group membership and missing manager references.
+- **Access reviews:** identify stale accounts, privileged group membership and missing manager or owner references.
 - **Device inventory and health:** inspect OS metadata, last-seen dates, disk space, patch status and return flags.
 - **Password policy metadata:** check password age, fictional password-length metadata, missing set dates, reset-required flags and never-expiring metadata. No passwords are read or stored; password length is represented by explicitly fictional metadata because directory systems generally do not reveal users’ actual passwords.
 - **Reports:** export objects as timestamped CSV and JSON.
@@ -28,7 +28,7 @@ Requirements: PowerShell 7+ recommended; Pester 5 and PSScriptAnalyzer for tests
 Import-Module ./src/ITAutomationToolkit/ITAutomationToolkit.psd1 -Force
 Get-DeviceInventory
 Get-DeviceHealthReport | Format-Table DeviceName, IsHealthy, Flags
-Get-UserAccessReview -StaleAfterDays 90 | Format-Table EmployeeId, StaleAccount, ExcessPrivileges, MissingManager
+Get-UserAccessReview -StaleAfterDays 90 | Format-Table EmployeeId, StaleAccount, ExcessPrivileges, MissingManager, MissingOwner
 ```
 
 ### Dry-run onboarding

@@ -65,6 +65,7 @@ Describe 'Get-UserAccessReview' {
         $result = @(Get-UserAccessReview -StaleAfterDays 90)
         ($result | Where-Object EmployeeId -eq EMP-103).ExcessPrivileges | Should -BeTrue
         ($result | Where-Object EmployeeId -eq EMP-103).MissingManager | Should -BeTrue
+        ($result | Where-Object EmployeeId -eq EMP-103).MissingOwner | Should -BeTrue
         ($result | Where-Object EmployeeId -eq EMP-102).StaleAccount | Should -BeTrue
     }
     It 'validates stale threshold' { { Get-UserAccessReview -StaleAfterDays 0 } | Should -Throw }

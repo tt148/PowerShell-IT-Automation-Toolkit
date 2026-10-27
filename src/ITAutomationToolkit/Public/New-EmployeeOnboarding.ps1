@@ -35,7 +35,7 @@ function New-EmployeeOnboarding {
         if ($PSCmdlet.ShouldProcess($target, "Create fictional employee and assign groups: $($groupNames -join ', ')")) {
             $new = [pscustomobject][ordered]@{
                 EmployeeId=$EmployeeId; DisplayName=$DisplayName; Email=$Email; Department=$Department
-                ManagerId=$ManagerId; Enabled='true'; CreatedDate=(Get-Date).ToString('yyyy-MM-dd')
+                ManagerId=$ManagerId; OwnerId=$ManagerId; Enabled='true'; CreatedDate=(Get-Date).ToString('yyyy-MM-dd')
                 LastSignInDate=''; PasswordLastSetDate=''; PasswordNeverExpires='false'; PasswordResetRequired='true'; PasswordLengthMetadata='0'
                 Groups=($groupNames -join ';')
             }

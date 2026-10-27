@@ -18,7 +18,8 @@ function Get-UserAccessReview {
         $stale=Test-ToolkitStaleDate -DateText $user.LastSignInDate -Days $StaleAfterDays
         $excess=(@($memberships | Where-Object { $_ -match 'Admin|Privileged|Global' }).Count -gt 0)
         $flags=@(); if ($stale) {$flags+='StaleAccount'}; if ($excess) {$flags+='ReviewPrivilegedGroup'}; if ([string]::IsNullOrWhiteSpace($user.ManagerId)) {$flags+='MissingManager'}
-        [pscustomobject]@{ EmployeeId=$user.EmployeeId; DisplayName=$user.DisplayName; Department=$user.Department; Enabled=($user.Enabled -eq 'true'); Groups=$memberships; LastSignInDate=$user.LastSignInDate; StaleAccount=$stale; ExcessPrivileges=$excess; MissingManager=([string]::IsNullOrWhiteSpace($user.ManagerId)); Flags=$flags }
+        if ([string]::IsNullOrWhiteSpace($user.OwnerId)) {$flags+='MissingOwner'}
+        [pscustomobject]@{ EmployeeId=$user.EmployeeId; DisplayName=$user.DisplayName; Department=$user.Department; Enabled=($user.Enabled -eq 'true'); Groups=$memberships; LastSignInDate=$user.LastSignInDate; StaleAccount=$stale; ExcessPrivileges=$excess; MissingManager=([string]::IsNullOrWhiteSpace($user.ManagerId)); MissingOwner=([string]::IsNullOrWhiteSpace($user.OwnerId)); Flags=$flags }
     }
     Add-ToolkitAuditEntry -Action 'access-review' -Target 'all-users' -Result Info -Details "Reviewed $($employees.Count) fictional account(s); stale threshold=$StaleAfterDays days."
 }
