@@ -1,0 +1,6 @@
+EmployeeId,DisplayName,Email,Department,ManagerId,Enabled,CreatedDate,LastSignInDate,PasswordLastSetDate,PasswordNeverExpires,PasswordResetRequired,PasswordLengthMetadata,Groups
+EMP-101,Demo User 101,demo.user101@example.invalid,Engineering,EMP-104,true,2025-10-01,2026-10-20,2026-08-01,false,false,16,Engineering-Standard;Source-Control
+EMP-102,Demo User 102,demo.user102@example.invalid,Support,EMP-104,true,2025-11-15,2026-06-01,2026-03-01,false,false,15,Support-Standard;Remote-Support
+EMP-103,Demo User 103,demo.user103@example.invalid,Finance,,true,2025-12-02,2025-12-15,2025-08-01,true,true,8,Finance-Standard;Global-Admin
+EMP-104,Demo User 104,demo.user104@example.invalid,Operations,,true,2025-09-01,2026-10-22,2026-09-15,false,false,18,Operations-Standard;IT-Admin
+EMP-105,Demo User 105,demo.user105@example.invalid,HumanResources,EMP-104,false,2025-05-03,,2025-05-03,false,true,12,HR-Standard

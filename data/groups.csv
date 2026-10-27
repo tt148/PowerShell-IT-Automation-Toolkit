@@ -1,0 +1,10 @@
+GroupName,Department,Description,Privileged
+Engineering-Standard,Engineering,Standard engineering access,false
+Source-Control,Engineering,Source control access,false
+Support-Standard,Support,Standard support access,false
+Remote-Support,Support,Remote support tools,false
+Finance-Standard,Finance,Standard finance access,false
+Operations-Standard,Operations,Standard operations access,false
+HR-Standard,HumanResources,Standard HR access,false
+IT-Admin,All,Simulated privileged IT administration,true
+Global-Admin,All,Simulated global administration,true
