@@ -20,7 +20,7 @@ function Invoke-EmployeeOffboarding {
         $assigned=@($devices | Where-Object OwnerId -eq $EmployeeId)
         if ($PSCmdlet.ShouldProcess($target, 'Disable account, remove groups and flag assigned devices for return')) {
             foreach ($row in $employees) { if ($row.EmployeeId -eq $EmployeeId) { $row.Enabled='false'; $row.Groups=''; $row.PasswordResetRequired='true' } }
-            foreach ($device in $devices) { if ($device.OwnerId -eq $EmployeeId) { $device.ReturnRequired='true'; $device.OwnerId='' } }
+            foreach ($device in $devices) { if ($device.OwnerId -eq $EmployeeId) { $device.ReturnRequired='true' } }
             Export-ToolkitCsv -Name employees -Rows $employees
             Export-ToolkitCsv -Name devices -Rows $devices
             Add-ToolkitAuditEntry -Action 'employee-offboarding' -Target $target -Result Success -Details "Account disabled; groups removed; devices flagged=$($assigned.Count)."

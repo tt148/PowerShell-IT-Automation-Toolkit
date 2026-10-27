@@ -7,7 +7,7 @@ function Add-ToolkitAuditEntry {
         [Parameter(Mandatory)][ValidateSet('Success','DryRun','Failed','Info')][string]$Result,
         [string]$Details = ''
     )
-    $paths = Get-ToolkitPaths
+    $paths = Get-ToolkitPath
     $parent = Split-Path -Parent $paths.Audit
     if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
     $entry = [ordered]@{

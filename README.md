@@ -15,7 +15,7 @@ IT support teams repeat the same account, access and device tasks every day. Man
 - **Access reviews:** identify stale accounts, privileged group membership and missing manager or owner references.
 - **Device inventory and health:** inspect OS metadata, last-seen dates, disk space, patch status and return flags.
 - **Password policy metadata:** check password age, fictional password-length metadata, missing set dates, reset-required flags and never-expiring metadata. No passwords are read or stored; password length is represented by explicitly fictional metadata because directory systems generally do not reveal users’ actual passwords.
-- **Reports:** export objects as timestamped CSV and JSON.
+- **Reports:** export objects as timestamped CSV and JSON (list properties such as `Flags` are joined with `;` in CSV).
 - **Audit trail:** JSON Lines records include UTC timestamp, actor, action, target, result and dry-run status.
 - **Safe operation:** state-changing commands support `-WhatIf` and `-Confirm`.
 - **Cross-platform CI:** GitHub Actions runs PSScriptAnalyzer and Pester on Windows and Ubuntu.
@@ -44,6 +44,18 @@ New-EmployeeOnboarding `
 ```
 
 `-WhatIf` prints a preview and writes a `DryRun` entry to the audit trail without changing the CSV directory. After reviewing the plan, omit `-WhatIf` to apply changes to the local simulation. Use `-Confirm:$false` only when you're deliberately running unattended against the fictional data.
+
+### Try changes without touching the sample data
+
+Commands without `-WhatIf` edit the CSV files the module reads. To experiment safely, point the toolkit at a scratch copy:
+
+```powershell
+Copy-Item ./data $env:TEMP/itat-data -Recurse
+$env:ITAT_DATA_PATH = "$env:TEMP/itat-data"
+$env:ITAT_REPORTS_PATH = "$env:TEMP/itat-reports"
+```
+
+If you already changed the repo copy, restore it with `git restore data`. Remove the variables (or open a new session) to go back to the repo data.
 
 ### Example output (illustrative)
 

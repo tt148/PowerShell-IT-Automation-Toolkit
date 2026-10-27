@@ -1,4 +1,4 @@
-function Get-ToolkitPaths {
+function Get-ToolkitPath {
     [CmdletBinding()]
     param()
     $repoRoot = Split-Path -Parent (Split-Path -Parent $script:ModuleRoot)
@@ -11,7 +11,7 @@ function Get-ToolkitPaths {
 function Import-ToolkitCsv {
     [CmdletBinding()]
     param([Parameter(Mandatory)][ValidateSet('employees','groups','devices')][string]$Name)
-    $paths = Get-ToolkitPaths
+    $paths = Get-ToolkitPath
     $file = Join-Path $paths.Data ($Name + '.csv')
     if (-not (Test-Path -LiteralPath $file)) { throw "Directory provider file not found: $file" }
     try { @(Import-Csv -LiteralPath $file -ErrorAction Stop) }
@@ -25,7 +25,7 @@ function Export-ToolkitCsv {
         [Parameter(Mandatory)][ValidateSet('employees','groups','devices')][string]$Name,
         [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Rows
     )
-    $paths = Get-ToolkitPaths
+    $paths = Get-ToolkitPath
     if (-not (Test-Path -LiteralPath $paths.Data)) { New-Item -ItemType Directory -Path $paths.Data -Force | Out-Null }
     $file = Join-Path $paths.Data ($Name + '.csv')
     try { $Rows | Export-Csv -LiteralPath $file -NoTypeInformation -Encoding UTF8 -ErrorAction Stop }
@@ -35,7 +35,7 @@ function Export-ToolkitCsv {
 function Get-ToolkitPasswordPolicy {
     [CmdletBinding()]
     param()
-    $paths = Get-ToolkitPaths
+    $paths = Get-ToolkitPath
     $file = Join-Path $paths.Data 'password_policy.json'
     if (-not (Test-Path -LiteralPath $file)) { throw "Password policy file not found: $file" }
     try { Get-Content -LiteralPath $file -Raw | ConvertFrom-Json -ErrorAction Stop }
@@ -47,16 +47,38 @@ function Get-ToolkitActor {
     return 'local-demo-operator'
 }
 
-function Get-ToolkitGroupNames {
+function Get-ToolkitGroupName {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Department, [Parameter(Mandatory)][object[]]$Groups)
     $matchingGroups = @($Groups | Where-Object { $_.Department -eq $Department })
     return @($matchingGroups | ForEach-Object { $_.GroupName } | Where-Object { $_ })
 }
 
+function ConvertTo-ToolkitDateTime {
+    [CmdletBinding()]
+    param([string]$DateText)
+    if ([string]::IsNullOrWhiteSpace($DateText)) { return $null }
+    $parsed = [datetime]::MinValue
+    if ([datetime]::TryParse($DateText, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$parsed)) { return $parsed }
+    return $null
+}
+
 function Test-ToolkitStaleDate {
+    [CmdletBinding()]
     param([string]$DateText, [int]$Days = 90)
-    if ([string]::IsNullOrWhiteSpace($DateText)) { return $true }
-    try { return ([datetime]::Parse($DateText) -lt (Get-Date).AddDays(-$Days)) }
-    catch { return $true }
+    $date = ConvertTo-ToolkitDateTime -DateText $DateText
+    if ($null -eq $date) { return $true }
+    return ($date -lt (Get-Date).AddDays(-$Days))
+}
+
+function ConvertTo-ToolkitFlatRow {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][object]$InputObject)
+    $row = [ordered]@{}
+    foreach ($property in $InputObject.PSObject.Properties) {
+        $value = $property.Value
+        if ($value -is [System.Collections.IEnumerable] -and $value -isnot [string]) { $value = (@($value) -join ';') }
+        $row[$property.Name] = $value
+    }
+    [pscustomobject]$row
 }

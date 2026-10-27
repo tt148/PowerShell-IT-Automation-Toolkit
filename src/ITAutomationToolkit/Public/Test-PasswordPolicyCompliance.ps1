@@ -22,10 +22,12 @@ function Test-PasswordPolicyCompliance {
         $lengthCompliant=($lengthMetadata -ge [int]$policy.minimumLength)
         if (-not $lengthCompliant) {$flags+='PasswordTooShortOrLengthMetadataMissing'}
         if ($user.PasswordResetRequired -eq 'true') {$flags+='ResetRequired'}
+        $setDate = ConvertTo-ToolkitDateTime -DateText $user.PasswordLastSetDate
         if ([string]::IsNullOrWhiteSpace($user.PasswordLastSetDate)) {$flags+='PasswordSetDateMissing'}
+        elseif ($null -eq $setDate) {$flags+='PasswordSetDateInvalid'}
         else {
-            try { $age=((Get-Date) - [datetime]::Parse($user.PasswordLastSetDate)).Days; if ($age -gt [int]$policy.maxPasswordAgeDays) {$flags+='PasswordExpired'} }
-            catch { $flags+='PasswordSetDateInvalid' }
+            $age=((Get-Date) - $setDate).Days
+            if ($age -gt [int]$policy.maxPasswordAgeDays) {$flags+='PasswordExpired'}
         }
         [pscustomobject]@{ EmployeeId=$user.EmployeeId; DisplayName=$user.DisplayName; PasswordAgeDays=$age; MaxPasswordAgeDays=[int]$policy.maxPasswordAgeDays; MinimumLength=[int]$policy.minimumLength; PasswordLengthMetadata=$lengthMetadata; PasswordLengthCompliant=$lengthCompliant; PasswordNeverExpires=($user.PasswordNeverExpires -eq 'true'); Compliant=($flags.Count -eq 0); Flags=$flags }
     }

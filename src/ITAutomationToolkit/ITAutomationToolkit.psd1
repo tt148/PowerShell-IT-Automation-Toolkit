@@ -1,6 +1,6 @@
 @{
     RootModule        = 'ITAutomationToolkit.psm1'
-    ModuleVersion     = '1.0.0'
+    ModuleVersion     = '1.0.1'
     GUID              = '6d5fca62-0c45-4d90-9f50-6d8a2b8c17a1'
     Author            = 'HelpDesk Pro Portfolio Project'
     CompanyName       = 'Fictional Example Company'

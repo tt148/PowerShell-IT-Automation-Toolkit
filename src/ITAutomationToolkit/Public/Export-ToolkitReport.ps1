@@ -15,14 +15,14 @@ function Export-ToolkitReport {
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='Low')]
     param(
-        [Parameter(Mandatory,ValueFromPipeline)][object[]]$InputObject,
+        [Parameter(Mandatory,ValueFromPipeline)][AllowEmptyCollection()][object[]]$InputObject,
         [Parameter(Mandatory)][ValidatePattern('^[a-zA-Z0-9_-]{2,60}$')][string]$Name,
         [ValidateSet('CSV','JSON','Both')][string]$Format='Both'
     )
     begin { $items=[System.Collections.Generic.List[object]]::new() }
     process { foreach ($item in $InputObject) { $items.Add($item) } }
     end {
-        $paths=Get-ToolkitPaths
+        $paths=Get-ToolkitPath
         $stamp=(Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
         $written=[System.Collections.Generic.List[string]]::new()
         $extensions = @('csv','json')
@@ -33,7 +33,7 @@ function Export-ToolkitReport {
             if ($PSCmdlet.ShouldProcess($file,"Export $($items.Count) report row(s) as $extension")) {
                 try {
                     if (-not (Test-Path -LiteralPath $paths.Reports)) { New-Item -ItemType Directory -Path $paths.Reports -Force | Out-Null }
-                    if ($extension -eq 'csv') { $items | Export-Csv -LiteralPath $file -NoTypeInformation -Encoding UTF8 -ErrorAction Stop }
+                    if ($extension -eq 'csv') { @($items | ForEach-Object { ConvertTo-ToolkitFlatRow -InputObject $_ }) | Export-Csv -LiteralPath $file -NoTypeInformation -Encoding UTF8 -ErrorAction Stop }
                     else { ConvertTo-Json -InputObject @($items) -Depth 8 | Set-Content -LiteralPath $file -Encoding UTF8 -ErrorAction Stop }
                     $written.Add($file)
                     Add-ToolkitAuditEntry -Action 'report-export' -Target $Name -Result Success -Details "Format=$extension; rows=$($items.Count); file=$file"

@@ -29,8 +29,10 @@ function New-EmployeeOnboarding {
     try {
         $employees = @(Import-ToolkitCsv -Name employees)
         if ($employees.EmployeeId -contains $EmployeeId) { throw "Employee ID '$EmployeeId' already exists." }
+        if ($employees.Email -contains $Email) { throw "Email '$Email' is already assigned to another employee." }
+        if ($ManagerId -and ($employees.EmployeeId -notcontains $ManagerId)) { throw "Manager '$ManagerId' was not found." }
         $groups = @(Import-ToolkitCsv -Name groups)
-        $groupNames = @(Get-ToolkitGroupNames -Department $Department -Groups $groups)
+        $groupNames = @(Get-ToolkitGroupName -Department $Department -Groups $groups)
         $placeholder = "DEMO-PLACEHOLDER-$EmployeeId-RESET-REQUIRED!"
         if ($PSCmdlet.ShouldProcess($target, "Create fictional employee and assign groups: $($groupNames -join ', ')")) {
             $new = [pscustomobject][ordered]@{

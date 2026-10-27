@@ -1,6 +1,6 @@
 # Operational scenarios
 
-All examples operate only on the fictional CSV/JSON data shipped with this repository. Use `-WhatIf` first for any state-changing operation.
+All examples operate only on the fictional CSV/JSON data shipped with this repository. Use `-WhatIf` first for any state-changing operation. Applying a change edits `data/*.csv`; use a scratch copy via `ITAT_DATA_PATH` (see the README) or run `git restore data` afterwards.
 
 ## 1. New hire Monday
 
@@ -13,7 +13,7 @@ New-EmployeeOnboarding -EmployeeId EMP-110 -DisplayName 'Demo User 110' -Email '
 After reviewing the preview, apply it to the local simulation:
 
 ```powershell
-New-EmployeeOnboarding -EmployeeId EMP-110 -DisplayName 'Demo User 110' -Email 'demo.user110@example.invalid' -Department Engineering -Confirm:$false
+New-EmployeeOnboarding -EmployeeId EMP-110 -DisplayName 'Demo User 110' -Email 'demo.user110@example.invalid' -Department Engineering -ManagerId EMP-104 -Confirm:$false
 ```
 
 The returned checklist reminds an operator to provision real access only through an approved identity system. The password field is a conspicuous non-secret placeholder, not a usable credential.

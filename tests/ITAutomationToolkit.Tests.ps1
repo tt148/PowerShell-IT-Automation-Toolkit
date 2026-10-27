@@ -40,6 +40,8 @@ Describe 'New-EmployeeOnboarding' {
         (Get-Content (Join-Path $script:TestData 'employees.csv') -Raw) | Should -Be $before
         (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"dryRun":true'
     }
+    It 'rejects an unknown manager' { { New-EmployeeOnboarding -EmployeeId EMP-996 -DisplayName 'Demo User 996' -Email demo.user996@example.invalid -Department Support -ManagerId EMP-555 -Confirm:$false } | Should -Throw '*not found*' }
+    It 'rejects a duplicate email address' { { New-EmployeeOnboarding -EmployeeId EMP-995 -DisplayName 'Demo User 995' -Email demo.user101@example.invalid -Department Support -Confirm:$false } | Should -Throw '*already assigned*' }
 }
 
 Describe 'Invoke-EmployeeOffboarding' {
@@ -50,6 +52,7 @@ Describe 'Invoke-EmployeeOffboarding' {
         $device = Import-Csv (Join-Path $script:TestData 'devices.csv') | Where-Object DeviceId -eq DEV-202
         $device.ReturnRequired | Should -Be 'true'
         $result.AccountDisabled | Should -BeTrue
+        $device.OwnerId | Should -Be 'EMP-102'
         (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'employee-offboarding'
     }
     It 'rejects an unknown employee' { { Invoke-EmployeeOffboarding -EmployeeId EMP-999 -Confirm:$false } | Should -Throw '*not found*' }
@@ -68,6 +71,11 @@ Describe 'Get-UserAccessReview' {
         ($result | Where-Object EmployeeId -eq EMP-103).MissingManager | Should -BeTrue
         ($result | Where-Object EmployeeId -eq EMP-103).MissingOwner | Should -BeTrue
         ($result | Where-Object EmployeeId -eq EMP-102).StaleAccount | Should -BeTrue
+    }
+    It 'treats groups marked Privileged in groups.csv as elevated' {
+        $groupFile = Join-Path $script:TestData 'groups.csv'
+        (Get-Content $groupFile -Raw) -replace 'Source-Control,Engineering,Source control access,false','Source-Control,Engineering,Source control access,true' | Set-Content $groupFile
+        ($(Get-UserAccessReview) | Where-Object EmployeeId -eq EMP-101).ExcessPrivileges | Should -BeTrue
     }
     It 'validates stale threshold' { { Get-UserAccessReview -StaleAfterDays 0 } | Should -Throw }
     It 'writes an audit entry' { Get-UserAccessReview | Out-Null; (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'access-review' }
@@ -97,6 +105,12 @@ Describe 'Test-PasswordPolicyCompliance' {
 
 Describe 'Export-ToolkitReport' {
     It 'exports both CSV and JSON' { $result = @([pscustomobject]@{Name='sample';Count=2}) | Export-ToolkitReport -Name sample-report -Format Both; $result.Files.Count | Should -Be 2; $result.Files | ForEach-Object { Test-Path $_ | Should -BeTrue }; (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'report-export' }
+    It 'flattens array properties in CSV output' {
+        $result = Get-UserAccessReview | Export-ToolkitReport -Name flatten-check -Format CSV
+        $csv = Get-Content $result.Files[0] -Raw
+        $csv | Should -Not -Match 'System.Object'
+        $csv | Should -Match 'Engineering-Standard;Source-Control'
+    }
     It 'rejects unsafe report names' { { @([pscustomobject]@{A=1}) | Export-ToolkitReport -Name '../unsafe' } | Should -Throw }
     It 'does not create report files with WhatIf and logs dry run' { $result = @([pscustomobject]@{A=1}) | Export-ToolkitReport -Name dry-run -WhatIf; $result.DryRun | Should -BeTrue; (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"dryRun":true' }
 }
