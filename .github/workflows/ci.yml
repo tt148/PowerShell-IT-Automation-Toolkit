@@ -1,0 +1,53 @@
+name: PowerShell CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test:
+    name: Analyze and test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install PowerShell modules
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          Install-Module Pester -MinimumVersion 5.0.0 -Scope CurrentUser -Force
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path ./src/ITAutomationToolkit -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $results | Format-Table -AutoSize
+          if ($results.Count -gt 0) { throw "PSScriptAnalyzer reported $($results.Count) issue(s)." }
+      - name: Run Pester
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputPath = './reports/pester-results.xml'
+          $config.TestResult.OutputFormat = 'NUnitXml'
+          New-Item -ItemType Directory -Path ./reports -Force | Out-Null
+          Invoke-Pester -Configuration $config
+      - name: Generate sample reports
+        if: always()
+        shell: pwsh
+        run: |
+          Import-Module ./src/ITAutomationToolkit/ITAutomationToolkit.psd1 -Force
+          $env:ITAT_REPORTS_PATH = './reports'
+          Get-DeviceHealthReport | Export-ToolkitReport -Name sample-device-health -Format Both -Confirm:$false | Out-Null
+      - name: Upload test results and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolkit-results-${{ matrix.os }}
+          path: reports/
+          if-no-files-found: warn
