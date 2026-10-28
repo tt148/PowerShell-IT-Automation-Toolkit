@@ -1,3 +1,4 @@
+Describe 'ITAutomationToolkit' {
 BeforeAll {
     $repoRoot = Split-Path -Parent $PSScriptRoot
     Import-Module (Join-Path $repoRoot 'src/ITAutomationToolkit/ITAutomationToolkit.psd1') -Force
@@ -119,4 +120,76 @@ Describe 'Write-AuditLog' {
     It 'writes a JSON-lines event' { Write-AuditLog -Action test-event -Target EMP-101 -Result Info | Out-Null; $line=Get-Content $env:ITAT_AUDIT_LOG_PATH | Select-Object -Last 1; ($line | ConvertFrom-Json).target | Should -Be 'EMP-101' }
     It 'validates result values' { { Write-AuditLog -Action test-event -Target EMP-101 -Result Invalid } | Should -Throw }
     It 'logs WhatIf requests' { Write-AuditLog -Action test-event -Target EMP-101 -Result Info -WhatIf | Out-Null; (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"dryRun":true' }
+}
+
+Describe 'Invoke-EmployeeTransfer' {
+    It 'moves departments, reconciles groups, and writes an audit record' {
+        $result = Invoke-EmployeeTransfer -EmployeeId EMP-101 -NewDepartment Finance -NewManagerId EMP-104 -Confirm:$false
+        $employee = Import-Csv (Join-Path $script:TestData 'employees.csv') | Where-Object EmployeeId -eq EMP-101
+        $employee.Department | Should -Be 'Finance'
+        $employee.Groups | Should -Match 'Finance-Standard'
+        $result.RemovedGroups | Should -Contain 'Engineering-Standard'
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'employee-transfer'
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'oldDepartment=Engineering'
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'newDepartment=Finance'
+    }
+    It 'rejects unknown employees and invalid departments' {
+        { Invoke-EmployeeTransfer -EmployeeId EMP-999 -NewDepartment Finance -Confirm:$false } | Should -Throw '*not found*'
+        { Invoke-EmployeeTransfer -EmployeeId EMP-101 -NewDepartment Unknown -Confirm:$false } | Should -Throw '*not valid*'
+    }
+    It 'does not change CSV data with WhatIf and logs dry run' {
+        $before = Get-Content (Join-Path $script:TestData 'employees.csv') -Raw
+        Invoke-EmployeeTransfer -EmployeeId EMP-101 -NewDepartment Finance -WhatIf | Out-Null
+        (Get-Content (Join-Path $script:TestData 'employees.csv') -Raw) | Should -Be $before
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"dryRun":true'
+    }
+}
+
+Describe 'Import-EmployeeBatch' {
+    It 'onboards valid rows and reports validation failures' {
+        $result = Import-EmployeeBatch -CsvPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'data/sample-new-hires.csv') -Confirm:$false
+        $result.Succeeded | Should -Be 3
+        $result.Failed | Should -Be 1
+        $result.Reasons[0].Reason | Should -Match 'invalid|not valid'
+        (Import-Csv (Join-Path $script:TestData 'employees.csv')).EmployeeId | Should -Contain 'EMP-201'
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'employee-batch-onboarding'
+    }
+    It 'does not change data with WhatIf and logs dry-run rows' {
+        $before = Get-Content (Join-Path $script:TestData 'employees.csv') -Raw
+        $result = Import-EmployeeBatch -CsvPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'data/sample-new-hires.csv') -WhatIf
+        $result.Succeeded | Should -Be 3
+        (Get-Content (Join-Path $script:TestData 'employees.csv') -Raw) | Should -Be $before
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"dryRun":true'
+    }
+}
+
+Describe 'Copy-UserAccess' {
+    It 'copies missing groups, skips held groups, and audits' {
+        $result = Copy-UserAccess -SourceEmployeeId EMP-101 -TargetEmployeeId EMP-102 -Confirm:$false
+        $employee = Import-Csv (Join-Path $script:TestData 'employees.csv') | Where-Object EmployeeId -eq EMP-102
+        $employee.Groups | Should -Match 'Engineering-Standard'
+        $result.Added | Should -Contain 'Engineering-Standard'
+        $result.Skipped | Should -BeNullOrEmpty
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'copy-user-access'
+    }
+    It 'rejects privileged groups unless explicitly included' {
+        { Copy-UserAccess -SourceEmployeeId EMP-104 -TargetEmployeeId EMP-102 -Confirm:$false } | Should -Throw '*-IncludePrivileged*'
+        { Copy-UserAccess -SourceEmployeeId EMP-999 -TargetEmployeeId EMP-102 -Confirm:$false } | Should -Throw '*not found*'
+    }
+    It 'shows additions with WhatIf without changing the target' {
+        $before = Get-Content (Join-Path $script:TestData 'employees.csv') -Raw
+        $result = Copy-UserAccess -SourceEmployeeId EMP-101 -TargetEmployeeId EMP-102 -WhatIf
+        $result.DryRun | Should -BeTrue
+        $result.Added | Should -Contain 'Engineering-Standard'
+        (Get-Content (Join-Path $script:TestData 'employees.csv') -Raw) | Should -Be $before
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"dryRun":true'
+    }
+}
+
+Describe 'Role templates' {
+    It 'uses a role template during onboarding' {
+        $result = New-EmployeeOnboarding -EmployeeId EMP-210 -DisplayName 'Demo User 210' -Email demo.user210@example.invalid -Department Support -Confirm:$false
+        $result.Groups | Should -Contain 'Remote-Support'
+    }
+}
 }
