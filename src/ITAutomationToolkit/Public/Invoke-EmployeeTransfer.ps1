@@ -17,7 +17,8 @@ function Invoke-EmployeeTransfer {
     param(
         [Parameter(Mandatory)][ValidatePattern('^EMP-[0-9]{3,6}$')][string]$EmployeeId,
         [Parameter(Mandatory)][ValidateLength(2,40)][string]$NewDepartment,
-        [ValidatePattern('^(|EMP-[0-9]{3,6})$')][string]$NewManagerId = ''
+        [ValidatePattern('^(|EMP-[0-9]{3,6})$')][string]$NewManagerId = '',
+        [ValidatePattern('^$|^[A-Za-z]{1,10}-[0-9]{1,10}$')][string]$TicketId = ''
     )
     try {
         $employees = @(Import-ToolkitCsv -Name employees)
@@ -54,14 +55,14 @@ function Invoke-EmployeeTransfer {
                 if ($device.OwnerId -eq $EmployeeId) { $device.ReturnRequired = 'true' }
             }
             if ($ownedDevices.Count -gt 0) { Export-ToolkitCsv -Name devices -Rows $devices }
-            Add-ToolkitAuditEntry -Action 'employee-transfer' -Target $EmployeeId -Result Success -Details $details
+            Add-ToolkitAuditEntry -Action 'employee-transfer' -Target $EmployeeId -Result Success -Details $details -TicketId $TicketId
             [pscustomobject]@{
                 EmployeeId=$EmployeeId; OldDepartment=$oldDepartment; NewDepartment=$NewDepartment
                 ManagerId=$(if ($PSBoundParameters.ContainsKey('NewManagerId')) { $NewManagerId } else { $employee.ManagerId }); RemovedGroups=$removeGroups; AddedGroups=$addGroups
                 CommonGroups=$commonGroups; Groups=$resultGroups; ReviewRequired=($ownedDevices.Count -gt 0)
             }
         } else {
-            Add-ToolkitAuditEntry -Action 'employee-transfer' -Target $EmployeeId -Result DryRun -Details "Would transfer employee; $details"
+            Add-ToolkitAuditEntry -Action 'employee-transfer' -Target $EmployeeId -Result DryRun -Details "Would transfer employee; $details" -TicketId $TicketId
             [pscustomobject]@{
                 EmployeeId=$EmployeeId; OldDepartment=$oldDepartment; NewDepartment=$NewDepartment
                 RemovedGroups=$removeGroups; AddedGroups=$addGroups; CommonGroups=$commonGroups
@@ -69,7 +70,7 @@ function Invoke-EmployeeTransfer {
             }
         }
     } catch {
-        Add-ToolkitAuditEntry -Action 'employee-transfer' -Target $EmployeeId -Result Failed -Details $_.Exception.Message
+        Add-ToolkitAuditEntry -Action 'employee-transfer' -Target $EmployeeId -Result Failed -Details $_.Exception.Message -TicketId $TicketId
         throw "Employee transfer failed for '$EmployeeId': $($_.Exception.Message)"
     }
 }

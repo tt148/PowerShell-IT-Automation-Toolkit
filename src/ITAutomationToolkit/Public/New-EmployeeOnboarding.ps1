@@ -23,7 +23,8 @@ function New-EmployeeOnboarding {
         [Parameter(Mandatory)][ValidateLength(3,80)][ValidatePattern('^Demo [A-Za-z0-9 -]+$')][string]$DisplayName,
         [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9._%+-]+@example\.invalid$')][string]$Email,
         [Parameter(Mandatory)][ValidateSet('Engineering','Support','Finance','HumanResources','Operations')][string]$Department,
-        [ValidatePattern('^(|EMP-[0-9]{3,6})$')][string]$ManagerId = ''
+        [ValidatePattern('^(|EMP-[0-9]{3,6})$')][string]$ManagerId = '',
+        [ValidatePattern('^$|^[A-Za-z]{1,10}-[0-9]{1,10}$')][string]$TicketId = ''
     )
     $target = $EmployeeId
     try {
@@ -42,15 +43,15 @@ function New-EmployeeOnboarding {
                 Groups=($groupNames -join ';')
             }
             Export-ToolkitCsv -Name employees -Rows (@($employees) + @($new))
-            Add-ToolkitAuditEntry -Action 'employee-onboarding' -Target $target -Result Success -Details "Created fictional account; groups=$($groupNames -join ', '); password placeholder only."
+            Add-ToolkitAuditEntry -Action 'employee-onboarding' -Target $target -Result Success -Details "Created fictional account; groups=$($groupNames -join ', '); password placeholder only." -TicketId $TicketId
             Write-Verbose "Created simulated employee $EmployeeId."
             [pscustomobject]@{ EmployeeId=$EmployeeId; DisplayName=$DisplayName; Department=$Department; Groups=$groupNames; TemporaryPasswordPlaceholder=$placeholder; Checklist=@('Verify manager and department','Provision account through approved identity provider','Set a real temporary credential out-of-band','Verify MFA enrollment','Issue assigned device','Confirm first sign-in') }
         } else {
-            Add-ToolkitAuditEntry -Action 'employee-onboarding' -Target $target -Result DryRun -Details "Would create account and assign groups: $($groupNames -join ', ')"
+            Add-ToolkitAuditEntry -Action 'employee-onboarding' -Target $target -Result DryRun -Details "Would create account and assign groups: $($groupNames -join ', ')" -TicketId $TicketId
             [pscustomobject]@{ EmployeeId=$EmployeeId; DisplayName=$DisplayName; Department=$Department; Groups=$groupNames; TemporaryPasswordPlaceholder=$placeholder; Checklist=@('DRY RUN: no directory changes made','Verify manager and department','Provision account through approved identity provider','Set a real temporary credential out-of-band') }
         }
     } catch {
-        Add-ToolkitAuditEntry -Action 'employee-onboarding' -Target $target -Result Failed -Details $_.Exception.Message
+        Add-ToolkitAuditEntry -Action 'employee-onboarding' -Target $target -Result Failed -Details $_.Exception.Message -TicketId $TicketId
         throw "Onboarding failed for '$target': $($_.Exception.Message)"
     }
 }

@@ -15,7 +15,8 @@ function Copy-UserAccess {
     param(
         [Parameter(Mandatory)][ValidatePattern('^EMP-[0-9]{3,6}$')][string]$SourceEmployeeId,
         [Parameter(Mandatory)][ValidatePattern('^EMP-[0-9]{3,6}$')][string]$TargetEmployeeId,
-        [switch]$IncludePrivileged
+        [switch]$IncludePrivileged,
+        [ValidatePattern('^$|^[A-Za-z]{1,10}-[0-9]{1,10}$')][string]$TicketId = ''
     )
     try {
         if ($SourceEmployeeId -eq $TargetEmployeeId) { throw 'Source and target employee IDs must be different.' }
@@ -43,9 +44,9 @@ function Copy-UserAccess {
                 if ($row.EmployeeId -eq $TargetEmployeeId) { $row.Groups = @($targetGroups + $toAdd | Select-Object -Unique) -join ';' }
             }
             Export-ToolkitCsv -Name employees -Rows $employees
-            Add-ToolkitAuditEntry -Action 'copy-user-access' -Target "$SourceEmployeeId->$TargetEmployeeId" -Result Success -Details $details
+            Add-ToolkitAuditEntry -Action 'copy-user-access' -Target "$SourceEmployeeId->$TargetEmployeeId" -Result Success -Details $details -TicketId $TicketId
         } else {
-            Add-ToolkitAuditEntry -Action 'copy-user-access' -Target "$SourceEmployeeId->$TargetEmployeeId" -Result DryRun -Details "Would copy access; $details"
+            Add-ToolkitAuditEntry -Action 'copy-user-access' -Target "$SourceEmployeeId->$TargetEmployeeId" -Result DryRun -Details "Would copy access; $details" -TicketId $TicketId
         }
 
         [pscustomobject]@{
@@ -53,7 +54,7 @@ function Copy-UserAccess {
             Skipped=$skipped; Privileged=$privileged; DryRun=(-not $shouldCopy)
         }
     } catch {
-        Add-ToolkitAuditEntry -Action 'copy-user-access' -Target "$SourceEmployeeId->$TargetEmployeeId" -Result Failed -Details $_.Exception.Message
+        Add-ToolkitAuditEntry -Action 'copy-user-access' -Target "$SourceEmployeeId->$TargetEmployeeId" -Result Failed -Details $_.Exception.Message -TicketId $TicketId
         throw "Copy user access failed: $($_.Exception.Message)"
     }
 }

@@ -7,7 +7,7 @@
     Copyright         = '(c) 2026. MIT License.'
     Description       = 'Safe, fictional-data IT operations automation examples for helpdesk and sysadmin portfolios.'
     PowerShellVersion = '5.1'
-    FunctionsToExport = @('New-EmployeeOnboarding','Invoke-EmployeeTransfer','Import-EmployeeBatch','Copy-UserAccess','Invoke-EmployeeOffboarding','Get-UserAccessReview','Get-DeviceInventory','Get-DeviceHealthReport','Test-PasswordPolicyCompliance','Export-ToolkitReport','Write-AuditLog')
+    FunctionsToExport = @('New-EmployeeOnboarding','Invoke-EmployeeTransfer','Import-EmployeeBatch','Copy-UserAccess','Invoke-EmployeeOffboarding','Get-UserAccessReview','Get-DeviceInventory','Get-DeviceHealthReport','Test-PasswordPolicyCompliance','Export-ToolkitReport','Write-AuditLog','Get-UserSupportSnapshot','Get-AuditLog')
     CmdletsToExport   = @()
     VariablesToExport = @()
     AliasesToExport   = @()

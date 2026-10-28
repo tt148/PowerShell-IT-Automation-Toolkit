@@ -10,7 +10,10 @@ function Import-EmployeeBatch {
     Import-EmployeeBatch -CsvPath ./data/sample-new-hires.csv -WhatIf
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='Medium')]
-    param([Parameter(Mandatory)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$CsvPath)
+    param(
+        [Parameter(Mandatory)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$CsvPath,
+        [ValidatePattern('^$|^[A-Za-z]{1,10}-[0-9]{1,10}$')][string]$TicketId = ''
+    )
     $succeeded = @()
     $failed = @()
 
@@ -48,14 +51,14 @@ function Import-EmployeeBatch {
                 }
                 $pending += $newEmployee
                 $succeeded += [pscustomobject]@{ EmployeeId=$employeeId; Department=[string]$row.Department; Groups=$groupNames }
-                Add-ToolkitAuditEntry -Action 'employee-batch-onboarding' -Target $employeeId -Result Success -Details "Department=$($row.Department); groups=$($groupNames -join ', ')"
+                Add-ToolkitAuditEntry -Action 'employee-batch-onboarding' -Target $employeeId -Result Success -Details "Department=$($row.Department); groups=$($groupNames -join ', ')" -TicketId $TicketId
             } else {
                 $succeeded += [pscustomobject]@{ EmployeeId=$employeeId; Department=[string]$row.Department; Groups=$groupNames; DryRun=$true }
-                Add-ToolkitAuditEntry -Action 'employee-batch-onboarding' -Target $employeeId -Result DryRun -Details "Would onboard employee; Department=$($row.Department); groups=$($groupNames -join ', ')"
+                Add-ToolkitAuditEntry -Action 'employee-batch-onboarding' -Target $employeeId -Result DryRun -Details "Would onboard employee; Department=$($row.Department); groups=$($groupNames -join ', ')" -TicketId $TicketId
             }
         } catch {
             $failed += [pscustomobject]@{ EmployeeId=$employeeId; Reason=$_.Exception.Message }
-            Add-ToolkitAuditEntry -Action 'employee-batch-onboarding' -Target $(if ($employeeId) { $employeeId } else { 'batch-row' }) -Result Failed -Details $_.Exception.Message
+            Add-ToolkitAuditEntry -Action 'employee-batch-onboarding' -Target $(if ($employeeId) { $employeeId } else { 'batch-row' }) -Result Failed -Details $_.Exception.Message -TicketId $TicketId
         }
     }
 

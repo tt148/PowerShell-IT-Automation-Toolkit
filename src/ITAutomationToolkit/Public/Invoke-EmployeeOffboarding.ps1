@@ -10,7 +10,10 @@ function Invoke-EmployeeOffboarding {
     Invoke-EmployeeOffboarding -EmployeeId EMP-103 -WhatIf
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact='High')]
-    param([Parameter(Mandatory)][ValidatePattern('^EMP-[0-9]{3,6}$')][string]$EmployeeId)
+    param(
+        [Parameter(Mandatory)][ValidatePattern('^EMP-[0-9]{3,6}$')][string]$EmployeeId,
+        [ValidatePattern('^$|^[A-Za-z]{1,10}-[0-9]{1,10}$')][string]$TicketId = ''
+    )
     $target=$EmployeeId
     try {
         $employees=@(Import-ToolkitCsv -Name employees)
@@ -23,12 +26,12 @@ function Invoke-EmployeeOffboarding {
             foreach ($device in $devices) { if ($device.OwnerId -eq $EmployeeId) { $device.ReturnRequired='true' } }
             Export-ToolkitCsv -Name employees -Rows $employees
             Export-ToolkitCsv -Name devices -Rows $devices
-            Add-ToolkitAuditEntry -Action 'employee-offboarding' -Target $target -Result Success -Details "Account disabled; groups removed; devices flagged=$($assigned.Count)."
+            Add-ToolkitAuditEntry -Action 'employee-offboarding' -Target $target -Result Success -Details "Account disabled; groups removed; devices flagged=$($assigned.Count)." -TicketId $TicketId
             Write-Verbose "Offboarded simulated employee $EmployeeId."
             [pscustomobject]@{ EmployeeId=$EmployeeId; AccountDisabled=$true; GroupsRemoved=$true; DevicesFlaggedForReturn=$assigned.Count; DryRun=$false }
         } else {
-            Add-ToolkitAuditEntry -Action 'employee-offboarding' -Target $target -Result DryRun -Details "Would disable account, remove groups and flag $($assigned.Count) device(s)."
+            Add-ToolkitAuditEntry -Action 'employee-offboarding' -Target $target -Result DryRun -Details "Would disable account, remove groups and flag $($assigned.Count) device(s)." -TicketId $TicketId
             [pscustomobject]@{ EmployeeId=$EmployeeId; AccountDisabled=$false; GroupsRemoved=$false; DevicesFlaggedForReturn=$assigned.Count; DryRun=$true }
         }
-    } catch { Add-ToolkitAuditEntry -Action 'employee-offboarding' -Target $target -Result Failed -Details $_.Exception.Message; throw "Offboarding failed for '$target': $($_.Exception.Message)" }
+    } catch { Add-ToolkitAuditEntry -Action 'employee-offboarding' -Target $target -Result Failed -Details $_.Exception.Message -TicketId $TicketId; throw "Offboarding failed for '$target': $($_.Exception.Message)" }
 }

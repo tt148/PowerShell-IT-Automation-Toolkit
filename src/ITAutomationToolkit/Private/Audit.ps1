@@ -5,7 +5,8 @@ function Add-ToolkitAuditEntry {
         [Parameter(Mandatory)][string]$Action,
         [Parameter(Mandatory)][string]$Target,
         [Parameter(Mandatory)][ValidateSet('Success','DryRun','Failed','Info')][string]$Result,
-        [string]$Details = ''
+        [string]$Details = '',
+        [ValidatePattern('^$|^[A-Za-z]{1,10}-[0-9]{1,10}$')][string]$TicketId = ''
     )
     $paths = Get-ToolkitPath
     $parent = Split-Path -Parent $paths.Audit
@@ -18,6 +19,7 @@ function Add-ToolkitAuditEntry {
         result = $Result
         dryRun = ($Result -eq 'DryRun')
         details = $Details
+        ticketId = $TicketId
     }
     try { ($entry | ConvertTo-Json -Compress -Depth 5) | Add-Content -LiteralPath $paths.Audit -Encoding UTF8 -ErrorAction Stop -WhatIf:$false }
     catch { Write-Error "Could not write audit log '$($paths.Audit)': $($_.Exception.Message)" -ErrorAction Continue }
