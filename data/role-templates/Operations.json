@@ -1,0 +1,6 @@
+{
+  "department": "Operations",
+  "description": "Standard operations departmental access",
+  "notes": "Verify operational ownership during transfers.",
+  "groups": ["Operations-Standard"]
+}

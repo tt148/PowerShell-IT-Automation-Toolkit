@@ -1,0 +1,6 @@
+{
+  "department": "HumanResources",
+  "description": "Standard human resources departmental access",
+  "notes": "Handle employee information access according to policy.",
+  "groups": ["HR-Standard"]
+}

@@ -1,0 +1,6 @@
+{
+  "department": "Support",
+  "description": "Standard support and remote support access",
+  "notes": "Remote support tools require local supervisor approval.",
+  "groups": ["Support-Standard", "Remote-Support"]
+}

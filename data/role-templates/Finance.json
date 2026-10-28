@@ -1,0 +1,6 @@
+{
+  "department": "Finance",
+  "description": "Standard finance departmental access",
+  "notes": "Review all financial access periodically.",
+  "groups": ["Finance-Standard"]
+}
