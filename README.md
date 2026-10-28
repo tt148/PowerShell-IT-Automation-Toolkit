@@ -19,8 +19,11 @@ IT support teams repeat the same account, access and device tasks every day. Man
 - **Access reviews:** identify stale accounts, privileged group membership and missing manager or owner references.
 - **Device inventory and health:** inspect OS metadata, last-seen dates, disk space, patch status and return flags.
 - **Password policy metadata:** check password age, fictional password-length metadata, missing set dates, reset-required flags and never-expiring metadata. No passwords are read or stored; password length is represented by explicitly fictional metadata because directory systems generally do not reveal users’ actual passwords.
+- **Support snapshots:** combine identity, group, device health, and access-review data for one employee as text or an object.
+- **Ticket correlation:** state-changing commands and audit-writing commands accept optional `-TicketId` values and record/filter them.
+- **HTML operations report:** create a single self-contained responsive report with summary cards, device/access/audit tables, filtering, sorting, and system dark/light mode.
 - **Reports:** export objects as timestamped CSV and JSON (list properties such as `Flags` are joined with `;` in CSV).
-- **Audit trail:** JSON Lines records include UTC timestamp, actor, action, target, result and dry-run status.
+- **Audit trail:** JSON Lines records include UTC timestamp, actor, action, target, result, ticket ID and dry-run status.
 - **Safe operation:** state-changing commands support `-WhatIf` and `-Confirm`.
 - **Cross-platform CI:** GitHub Actions runs PSScriptAnalyzer and Pester on Windows and Ubuntu.
 
@@ -73,9 +76,36 @@ DEMO-LAPTOP-203        False {DeviceStale}
 
 Output depends on the current date because stale-device and stale-account flags use date thresholds.
 
+### Helpdesk text snapshot
+
+```powershell
+Get-UserSupportSnapshot -EmployeeId EMP-101 -Format Text -TicketId HD-1234
+```
+
+```text
+User Support Snapshot
+Employee: Demo User 101 [EMP-101]
+Email: demo.user101@example.invalid
+Department: Engineering
+Manager: Demo User 104 [EMP-104]
+Account status: Enabled
+Groups: Engineering-Standard, Source-Control
+Devices: DEMO-LAPTOP-201 [DEV-201] flags=
+Last sign-in: 2026-10-20
+Access flags: None
+Ticket: HD-1234
+```
+
 ## Example commands
 
 ```powershell
+# Build a ticket-ready support snapshot and filter audit records
+Get-UserSupportSnapshot -EmployeeId EMP-101 -Format Text -TicketId HD-1234
+Get-AuditLog -TicketId HD-1234
+
+# Create a self-contained HTML operations report
+New-ToolkitHtmlReport -Name support-operations -TicketId HD-1234
+
 # Preview and apply a fictional employee transfer
 Invoke-EmployeeTransfer -EmployeeId EMP-101 -NewDepartment Finance -NewManagerId EMP-104 -WhatIf
 Invoke-EmployeeTransfer -EmployeeId EMP-101 -NewDepartment Finance -NewManagerId EMP-104 -Confirm:$false

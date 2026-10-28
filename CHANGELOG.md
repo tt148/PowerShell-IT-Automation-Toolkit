@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 - 2026-10-28
+
+- Added `Get-UserSupportSnapshot` with object and ticket-friendly text formats.
+- Added optional `-TicketId` support to state-changing and audit commands, plus `Get-AuditLog` ticket filtering.
+- Added `New-ToolkitHtmlReport` with escaped, self-contained HTML, summary cards, tables, filtering, sorting, responsive styling and system dark/light mode.
+
 ## 1.1.0 - 2026-10-28
 
 - Added `Invoke-EmployeeTransfer` with department group reconciliation, optional manager changes, device review flags and audit records.
