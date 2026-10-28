@@ -192,4 +192,66 @@ Describe 'Role templates' {
         $result.Groups | Should -Contain 'Remote-Support'
     }
 }
+
+Describe 'Get-UserSupportSnapshot' {
+    It 'returns an object with identity, groups, devices, and access flags' {
+        $result = Get-UserSupportSnapshot -EmployeeId EMP-101 -Confirm:$false
+        $result.EmployeeId | Should -Be 'EMP-101'
+        $result.Department | Should -Be 'Engineering'
+        $result.Groups | Should -Contain 'Engineering-Standard'
+        $result.Devices.Count | Should -BeGreaterThan 0
+        $result.PSObject.Properties.Name | Should -Contain 'AccessReviewFlags'
+    }
+    It 'rejects an unknown employee' {
+        { Get-UserSupportSnapshot -EmployeeId EMP-999 -Confirm:$false } | Should -Throw '*not found*'
+    }
+    It 'returns a readable text summary' {
+        $result = Get-UserSupportSnapshot -EmployeeId EMP-101 -Format Text -TicketId HD-1234 -Confirm:$false
+        $result | Should -Match 'User Support Snapshot'
+        $result | Should -Match 'Employee: Demo User 101 \[EMP-101\]'
+        $result | Should -Match 'Ticket: HD-1234'
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'support-snapshot'
+    }
+}
+
+Describe 'Ticket IDs' {
+    It 'accepts valid ticket IDs and records them in audits' {
+        Write-AuditLog -Action ticket-check -Target EMP-101 -Result Info -TicketId HD-1234 -Confirm:$false
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"ticketId":"HD-1234"'
+        @(Get-AuditLog -TicketId HD-1234).Count | Should -BeGreaterThan 0
+    }
+    It 'rejects invalid ticket IDs' {
+        { Write-AuditLog -Action ticket-check -Target EMP-101 -Result Info -TicketId invalid } | Should -Throw
+        { New-EmployeeOnboarding -EmployeeId EMP-211 -DisplayName 'Demo User 211' -Email demo.user211@example.invalid -Department Engineering -TicketId 1234 -Confirm:$false } | Should -Throw
+    }
+    It 'keeps TicketId optional for existing usage' {
+        Write-AuditLog -Action optional-ticket -Target EMP-101 -Result Info -Confirm:$false
+        $line = Get-Content $env:ITAT_AUDIT_LOG_PATH | Select-Object -Last 1 | ConvertFrom-Json
+        $line.ticketId | Should -Be ''
+    }
+}
+
+Describe 'New-ToolkitHtmlReport' {
+    It 'creates a self-contained HTML report with expected sections' {
+        $result = New-ToolkitHtmlReport -Name support-report -TicketId HD-5678 -Confirm:$false
+        Test-Path $result.File | Should -BeTrue
+        $html = Get-Content $result.File -Raw
+        $html | Should -Match 'IT Support Operations Report'
+        $html | Should -Match 'Device Health'
+        $html | Should -Match 'Access Review'
+        $html | Should -Match 'Recent Audit Activity'
+        $html | Should -Match '<script>'
+        $html | Should -Match 'prefers-color-scheme: dark'
+    }
+    It 'escapes employee names so markup cannot be injected' {
+        $employeeFile = Join-Path $script:TestData 'employees.csv'
+        $employeeRows = @(Import-Csv $employeeFile)
+        foreach ($employee in $employeeRows) { if ($employee.EmployeeId -eq 'EMP-101') { $employee.DisplayName = '<img src=x onerror=alert(1)>Demo' } }
+        $employeeRows | Export-Csv $employeeFile -NoTypeInformation -Encoding UTF8
+        $result = New-ToolkitHtmlReport -Name escaped-report -Confirm:$false
+        $html = Get-Content $result.File -Raw
+        $html | Should -Match '&lt;img src=x onerror=alert\(1\)&gt;Demo'
+        $html | Should -Not -Match '<img src=x'
+    }
+}
 }
