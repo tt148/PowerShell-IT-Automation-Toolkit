@@ -15,7 +15,7 @@ IT support teams repeat the same account, access and device tasks every day. Man
 - **Employee transfers:** move a fictional employee to a valid department, reconcile old/new department groups, preserve common groups, update an optional manager, and flag owned devices for review.
 - **Role templates:** use department JSON templates with CSV fallback for Engineering, Finance, Operations, Support and HumanResources onboarding or transfer access.
 - **Access copying:** copy missing group memberships between fictional employees, preview additions and reject privileged groups unless explicitly included.
-- **Offboarding:** disable a simulated account, remove group membership and flag devices for return.
+- **Offboarding lifecycle:** disable a simulated account, capture an evidence snapshot, schedule account expiry, configure manager mailbox forwarding in the simulation, remove groups and return a follow-up checklist.
 - **Access reviews:** identify stale accounts, privileged group membership and missing manager or owner references.
 - **Device inventory and health:** inspect OS metadata, last-seen dates, disk space, patch status and return flags.
 - **Password policy metadata:** check password age, fictional password-length metadata, missing set dates, reset-required flags and never-expiring metadata. No passwords are read or stored; password length is represented by explicitly fictional metadata because directory systems generally do not reveal users’ actual passwords.
@@ -134,16 +134,16 @@ Get-Content ./reports/audit.jsonl | ForEach-Object { $_ | ConvertFrom-Json }
 
 ## Screenshots and sample output
 
-Add screenshots under `docs/screenshots/` before publishing. Recommended captures:
+Place screenshots under [`docs/screenshots/`](docs/screenshots/) before publishing:
 
-1. `device-health-report.png` — terminal showing healthy/unhealthy device flags.
-2. `onboarding-whatif.png` — safe onboarding preview.
-3. `offboarding-audit.png` — offboarding result and audit JSONL record.
-4. `access-review.png` — stale/privileged/missing-manager flags.
-5. `exported-reports.png` — sample CSV/JSON report files.
-6. `github-actions.png` — successful Windows and Ubuntu CI jobs.
+1. `operations-report.png` — the self-contained HTML operations report.
+2. `support-snapshot.png` — the text snapshot pasted into a helpdesk ticket.
 
-Do not include real personal data or secrets in screenshots. Sample output above is illustrative; generate actual captures from your local run.
+Do not include real personal data, secrets, tenant identifiers or credentials in screenshots. Sample output above is illustrative; generate captures only from the fictional local simulation.
+
+## Architecture
+
+![IT Automation Toolkit architecture](docs/architecture.svg)
 
 ## Folder structure
 
@@ -151,7 +151,11 @@ Do not include real personal data or secrets in screenshots. Sample output above
 .
 ├── .github/workflows/ci.yml
 ├── data/                         # Fictional CSV/JSON source data
-├── docs/scenarios.md
+├── docs/
+│   ├── RUNBOOK.md
+│   ├── TROUBLESHOOTING.md
+│   ├── architecture.svg
+│   └── screenshots/
 ├── reports/                      # Generated files; gitignored
 ├── src/ITAutomationToolkit/
 │   ├── Private/                  # CSV/JSON provider and audit writer
@@ -160,10 +164,27 @@ Do not include real personal data or secrets in screenshots. Sample output above
 │   └── ITAutomationToolkit.psm1
 ├── tests/                        # Pester v5 tests
 ├── PSScriptAnalyzerSettings.psd1
+├── SECURITY.md
+├── .editorconfig
 ├── CONTRIBUTING.md
 ├── CHANGELOG.md
 └── LICENSE
 ```
+
+## Scope and honesty
+
+This is a portfolio simulation. It uses fictional people, reserved example email addresses, CSV/JSON provider data, and no live directory or cloud tenant. It has not been run against a live Active Directory domain or Microsoft 365 tenant.
+
+The current implementation intentionally models provider operations rather than connecting to production systems. Real providers could replace `src/ITAutomationToolkit/Private/Provider.ps1` with authenticated Active Directory, Microsoft Graph, Exchange, licence and device APIs while preserving the public command contracts. Such a replacement would require separate credential, authorization, tenant, approval, auditing and rollback controls.
+
+## Inspiration
+
+The following projects were sources of ideas for helpdesk automation concepts and terminology only. This repository does not reuse their code:
+
+- Microsoft-365-HelpDesk-Automation
+- onboarding-automation
+- active-directory-automation
+- PowerShell-Onboarding-Automation-Suite
 
 ## Design decisions
 
@@ -179,8 +200,8 @@ Do not include real personal data or secrets in screenshots. Sample output above
 Install dependencies once:
 
 ```powershell
-Install-Module Pester -MinimumVersion 5.0.0 -Scope CurrentUser
-Install-Module PSScriptAnalyzer -Scope CurrentUser
+Install-Module Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99 -Scope CurrentUser -SkipPublisherCheck
+Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
 ```
 
 Run Pester:

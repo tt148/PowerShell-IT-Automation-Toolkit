@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0 - 2026-10-28
+
+- Extended offboarding with pre-change evidence snapshots, configurable scheduled expiry, simulated manager mailbox forwarding, and ticket-linked follow-up checklists.
+- Added detailed offboarding evidence, retention, forwarding, and WhatIf coverage to Pester.
+- Added security guidance, operations runbook, troubleshooting guide, architecture SVG, and editor configuration.
+
 ## 1.2.0 - 2026-10-28
 
 - Added `Get-UserSupportSnapshot` with object and ticket-friendly text formats.
