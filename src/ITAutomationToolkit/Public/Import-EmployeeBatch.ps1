@@ -24,7 +24,6 @@ function Import-EmployeeBatch {
     }
 
     $employees = @(Import-ToolkitCsv -Name employees)
-    $groups = @(Import-ToolkitCsv -Name groups)
     $pending = @($employees)
 
     foreach ($row in $rows) {
@@ -38,7 +37,7 @@ function Import-EmployeeBatch {
             if ($pending.Email -contains ([string]$row.Email)) { throw "Email '$($row.Email)' is already assigned." }
             $managerId = if ($row.PSObject.Properties['ManagerId']) { [string]$row.ManagerId } else { '' }
             if ($managerId -and ($pending.EmployeeId -notcontains $managerId)) { throw "Manager '$managerId' was not found." }
-            $groupNames = @(Get-ToolkitDepartmentGroups -Department ([string]$row.Department))
+            $groupNames = @(Get-ToolkitDepartmentGroup -Department ([string]$row.Department))
 
             if ($PSCmdlet.ShouldProcess($employeeId, "Create batch employee and assign groups: $($groupNames -join ', ')")) {
                 $newEmployee = [pscustomobject][ordered]@{

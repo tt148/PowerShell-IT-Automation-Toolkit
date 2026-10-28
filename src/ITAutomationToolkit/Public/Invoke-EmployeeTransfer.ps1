@@ -27,8 +27,8 @@ function Invoke-EmployeeTransfer {
         if ($NewManagerId -and ($employees.EmployeeId -notcontains $NewManagerId)) { throw "Manager '$NewManagerId' was not found." }
 
         $oldDepartment = [string]$employee.Department
-        $oldGroups = @(Get-ToolkitDepartmentGroups -Department $oldDepartment)
-        $newGroups = @(Get-ToolkitDepartmentGroups -Department $NewDepartment)
+        $oldGroups = @(Get-ToolkitDepartmentGroup -Department $oldDepartment)
+        $newGroups = @(Get-ToolkitDepartmentGroup -Department $NewDepartment)
         $commonGroups = @($oldGroups | Where-Object { $newGroups -contains $_ })
         $removeGroups = @($oldGroups | Where-Object { $newGroups -notcontains $_ })
         $addGroups = @($newGroups | Where-Object { $oldGroups -notcontains $_ })

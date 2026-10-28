@@ -32,7 +32,7 @@ function New-EmployeeOnboarding {
         if ($employees.Email -contains $Email) { throw "Email '$Email' is already assigned to another employee." }
         if ($ManagerId -and ($employees.EmployeeId -notcontains $ManagerId)) { throw "Manager '$ManagerId' was not found." }
         if (-not (Test-ToolkitDepartment -Department $Department)) { throw "Department '$Department' is not valid." }
-        $groupNames = @(Get-ToolkitDepartmentGroups -Department $Department)
+        $groupNames = @(Get-ToolkitDepartmentGroup -Department $Department)
         $placeholder = "DEMO-PLACEHOLDER-$EmployeeId-RESET-REQUIRED!"
         if ($PSCmdlet.ShouldProcess($target, "Create fictional employee and assign groups: $($groupNames -join ', ')")) {
             $new = [pscustomobject][ordered]@{

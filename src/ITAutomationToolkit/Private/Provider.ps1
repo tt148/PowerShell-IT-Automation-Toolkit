@@ -64,7 +64,7 @@ function Get-ToolkitRoleTemplate {
     catch { throw "Unable to read role template '$Department': $($_.Exception.Message)" }
 }
 
-function Get-ToolkitDepartmentGroups {
+function Get-ToolkitDepartmentGroup {
     [CmdletBinding()]
     param([Parameter(Mandatory)][string]$Department)
     $template = Get-ToolkitRoleTemplate -Department $Department
