@@ -1,0 +1,6 @@
+DeviceId,DeviceName,OwnerId,OperatingSystem,OSVersion,LastSeen,DiskFreePercent,PatchStatus,ReturnRequired
+DEV-201,DEMO-LAPTOP-201,EMP-101,Windows,11-23H2,2026-10-26,42,Compliant,false
+DEV-202,DEMO-LAPTOP-202,EMP-102,Windows,10-22H2,2026-09-20,8,MissingUpdates,false
+DEV-203,DEMO-LAPTOP-203,EMP-103,Windows,11-23H2,2025-12-15,64,Compliant,false
+DEV-204,DEMO-VM-204,EMP-104,Ubuntu,24.04,2026-10-26,18,Compliant,false
+DEV-205,DEMO-LAPTOP-205,EMP-105,Windows,11-23H2,2026-05-01,12,MissingUpdates,true

@@ -1,0 +1,5 @@
+EmployeeId,DisplayName,Email,Department,ManagerId
+EMP-201,Demo User 201,demo.user201@example.invalid,Engineering,EMP-104
+EMP-202,Demo User 202,demo.user202@example.invalid,Finance,EMP-104
+EMP-203,Demo User 203,demo.user203@example.invalid,Operations,
+BAD,Not Demo,bad@example.com,Unknown,EMP-104

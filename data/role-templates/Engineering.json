@@ -1,0 +1,6 @@
+{
+  "department": "Engineering",
+  "description": "Standard engineering collaboration and source control access",
+  "notes": "Review source control access during department transfers.",
+  "groups": ["Engineering-Standard", "Source-Control"]
+}
