@@ -47,20 +47,37 @@ Describe 'New-EmployeeOnboarding' {
 
 Describe 'Invoke-EmployeeOffboarding' {
     It 'disables account and flags owned devices' {
-        $result = Invoke-EmployeeOffboarding -EmployeeId EMP-102 -Confirm:$false
+        $result = Invoke-EmployeeOffboarding -EmployeeId EMP-102 -RetentionDays 30 -TicketId HD-2001 -Confirm:$false
         $employee = Import-Csv (Join-Path $script:TestData 'employees.csv') | Where-Object EmployeeId -eq EMP-102
         $employee.Enabled | Should -Be 'false'
+        $employee.ScheduledExpiryDate | Should -Be ([datetime]::UtcNow.AddDays(30).ToString('yyyy-MM-dd'))
+        $employee.MailboxForwarding | Should -Be 'true'
+        $employee.MailboxForwardManagerId | Should -Be 'EMP-104'
         $device = Import-Csv (Join-Path $script:TestData 'devices.csv') | Where-Object DeviceId -eq DEV-202
         $device.ReturnRequired | Should -Be 'true'
         $result.AccountDisabled | Should -BeTrue
         $device.OwnerId | Should -Be 'EMP-102'
+        $result.MailboxForwarding | Should -BeTrue
+        $result.FollowUp.DevicesToReturn | Should -Contain 'DEV-202'
+        $result.FollowUp.AccessToReview | Should -Contain 'Support-Standard'
+        $result.FollowUp.LicencesToReclaim | Should -Contain 'Mailbox'
+        $result.FollowUp.TicketToClose | Should -Be 'HD-2001'
+        Test-Path $result.EvidenceFile | Should -BeTrue
+        $evidence = Get-Content $result.EvidenceFile -Raw | ConvertFrom-Json
+        $evidence.account.ManagerId | Should -Be 'EMP-104'
+        $evidence.devices[0].DeviceId | Should -Be 'DEV-202'
         (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'employee-offboarding'
+        (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match 'HD-2001'
     }
     It 'rejects an unknown employee' { { Invoke-EmployeeOffboarding -EmployeeId EMP-999 -Confirm:$false } | Should -Throw '*not found*' }
-    It 'does not change CSV data with WhatIf and logs dry run' {
+    It 'validates retention days' { { Invoke-EmployeeOffboarding -EmployeeId EMP-102 -RetentionDays 0 -Confirm:$false } | Should -Throw }
+    It 'does not change CSV data or write evidence with WhatIf and logs dry run' {
         $before = Get-Content (Join-Path $script:TestData 'employees.csv') -Raw
-        Invoke-EmployeeOffboarding -EmployeeId EMP-102 -WhatIf | Out-Null
+        $result = Invoke-EmployeeOffboarding -EmployeeId EMP-102 -RetentionDays 45 -TicketId HD-2002 -WhatIf
         (Get-Content (Join-Path $script:TestData 'employees.csv') -Raw) | Should -Be $before
+        $result.EvidenceFile | Should -Be ''
+        $result.DryRun | Should -BeTrue
+        @(Get-ChildItem (Join-Path $script:TestReports '*') -File -Filter 'offboarding-*.json' -ErrorAction SilentlyContinue).Count | Should -Be 0
         (Get-Content $env:ITAT_AUDIT_LOG_PATH -Raw) | Should -Match '"dryRun":true'
     }
 }
