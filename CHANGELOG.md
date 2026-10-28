@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 - 2026-10-28
+
+- Added `Invoke-EmployeeTransfer` with department group reconciliation, optional manager changes, device review flags and audit records.
+- Added department role templates under `data/role-templates`; onboarding and transfers use templates with CSV fallback.
+- Added `Import-EmployeeBatch` for per-row fictional CSV onboarding validation, summaries and audit records.
+- Added `Copy-UserAccess` with what-if previews, skipped existing groups, audit records and privileged-group opt-in.
+- Added Pester coverage for the new workflows and WhatIf audit behavior.
+
 ## 1.0.1 - 2026-10-27
 
 - Renamed private helpers to singular nouns so PSScriptAnalyzer (`PSUseSingularNouns`) passes in CI.

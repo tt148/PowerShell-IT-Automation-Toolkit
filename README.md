@@ -10,7 +10,11 @@ IT support teams repeat the same account, access and device tasks every day. Man
 
 ## Features
 
-- **Onboarding:** create a fictional employee record, assign department groups and return a checklist.
+- **Onboarding:** create a fictional employee record, assign department role-template groups and return a checklist.
+- **Batch onboarding:** import multiple fictional hires from CSV, validate each row independently, and return a success/failure summary.
+- **Employee transfers:** move a fictional employee to a valid department, reconcile old/new department groups, preserve common groups, update an optional manager, and flag owned devices for review.
+- **Role templates:** use department JSON templates with CSV fallback for Engineering, Finance, Operations, Support and HumanResources onboarding or transfer access.
+- **Access copying:** copy missing group memberships between fictional employees, preview additions and reject privileged groups unless explicitly included.
 - **Offboarding:** disable a simulated account, remove group membership and flag devices for return.
 - **Access reviews:** identify stale accounts, privileged group membership and missing manager or owner references.
 - **Device inventory and health:** inspect OS metadata, last-seen dates, disk space, patch status and return flags.
@@ -72,6 +76,18 @@ Output depends on the current date because stale-device and stale-account flags 
 ## Example commands
 
 ```powershell
+# Preview and apply a fictional employee transfer
+Invoke-EmployeeTransfer -EmployeeId EMP-101 -NewDepartment Finance -NewManagerId EMP-104 -WhatIf
+Invoke-EmployeeTransfer -EmployeeId EMP-101 -NewDepartment Finance -NewManagerId EMP-104 -Confirm:$false
+
+# Preview or run bulk onboarding from CSV
+Import-EmployeeBatch -CsvPath ./data/sample-new-hires.csv -WhatIf
+Import-EmployeeBatch -CsvPath ./data/sample-new-hires.csv -Confirm:$false
+
+# Preview copied access; privileged groups require explicit opt-in
+Copy-UserAccess -SourceEmployeeId EMP-101 -TargetEmployeeId EMP-102 -WhatIf
+Copy-UserAccess -SourceEmployeeId EMP-101 -TargetEmployeeId EMP-102 -IncludePrivileged -Confirm:$false
+
 # Preview then simulate a leaver workflow
 Invoke-EmployeeOffboarding -EmployeeId EMP-103 -WhatIf
 Invoke-EmployeeOffboarding -EmployeeId EMP-103 -Confirm:$false
