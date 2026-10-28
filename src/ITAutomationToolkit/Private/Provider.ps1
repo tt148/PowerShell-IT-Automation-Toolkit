@@ -54,6 +54,41 @@ function Get-ToolkitGroupName {
     return @($matchingGroups | ForEach-Object { $_.GroupName } | Where-Object { $_ })
 }
 
+function Get-ToolkitRoleTemplate {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][ValidatePattern('^[A-Za-z][A-Za-z0-9-]*$')][string]$Department)
+    $paths = Get-ToolkitPath
+    $templatePath = Join-Path $paths.Data (Join-Path 'role-templates' ($Department + '.json'))
+    if (-not (Test-Path -LiteralPath $templatePath)) { return $null }
+    try { Get-Content -LiteralPath $templatePath -Raw | ConvertFrom-Json -ErrorAction Stop }
+    catch { throw "Unable to read role template '$Department': $($_.Exception.Message)" }
+}
+
+function Get-ToolkitDepartmentGroups {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Department)
+    $template = Get-ToolkitRoleTemplate -Department $Department
+    if ($null -ne $template) {
+        return @($template.groups | Where-Object { $_ })
+    }
+    $groups = @(Import-ToolkitCsv -Name groups)
+    return @(Get-ToolkitGroupName -Department $Department -Groups $groups)
+}
+
+function Test-ToolkitDepartment {
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Department)
+    $groups = @(Import-ToolkitCsv -Name groups)
+    $csvDepartments = @($groups.Department | Where-Object { $_ -and $_ -ne 'All' } | Sort-Object -Unique)
+    $paths = Get-ToolkitPath
+    $templateDirectory = Join-Path $paths.Data 'role-templates'
+    $templateDepartments = @()
+    if (Test-Path -LiteralPath $templateDirectory) {
+        $templateDepartments = @(Get-ChildItem -LiteralPath $templateDirectory -Filter '*.json' | ForEach-Object { $_.BaseName })
+    }
+    return (($csvDepartments + $templateDepartments) -contains $Department)
+}
+
 function ConvertTo-ToolkitDateTime {
     [CmdletBinding()]
     param([string]$DateText)

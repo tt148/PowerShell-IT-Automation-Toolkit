@@ -9,7 +9,7 @@ function Add-ToolkitAuditEntry {
     )
     $paths = Get-ToolkitPath
     $parent = Split-Path -Parent $paths.Audit
-    if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+    if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Path $parent -Force -WhatIf:$false | Out-Null }
     $entry = [ordered]@{
         timestamp = (Get-Date).ToUniversalTime().ToString('o')
         actor = Get-ToolkitActor
@@ -19,6 +19,6 @@ function Add-ToolkitAuditEntry {
         dryRun = ($Result -eq 'DryRun')
         details = $Details
     }
-    try { ($entry | ConvertTo-Json -Compress -Depth 5) | Add-Content -LiteralPath $paths.Audit -Encoding UTF8 -ErrorAction Stop }
+    try { ($entry | ConvertTo-Json -Compress -Depth 5) | Add-Content -LiteralPath $paths.Audit -Encoding UTF8 -ErrorAction Stop -WhatIf:$false }
     catch { Write-Error "Could not write audit log '$($paths.Audit)': $($_.Exception.Message)" -ErrorAction Continue }
 }
