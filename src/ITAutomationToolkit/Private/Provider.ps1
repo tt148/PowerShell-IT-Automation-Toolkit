@@ -106,6 +106,14 @@ function Test-ToolkitStaleDate {
     return ($date -lt (Get-Date).AddDays(-$Days))
 }
 
+function ConvertTo-ToolkitHtmlText {
+    [CmdletBinding()]
+    param([AllowNull()][object]$Value)
+    if ($null -eq $Value) { return '' }
+    $escapedValue = [string]$Value
+    $escapedValue.Replace('&','&amp;').Replace('<','&lt;').Replace('>','&gt;').Replace('"','&quot;').Replace("'",'&#39;')
+}
+
 function ConvertTo-ToolkitFlatRow {
     [CmdletBinding()]
     param([Parameter(Mandatory)][object]$InputObject)
